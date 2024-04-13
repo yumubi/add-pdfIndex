@@ -17,7 +17,7 @@ val projectName = "goji-tools"
 
 val slf4jVersion = "1.7.32"
 val logbackVersion = "1.2.6"
-
+val itextVersion = "8.0.2"
 
 
 repositories {
@@ -25,6 +25,9 @@ repositories {
 }
 
 dependencies {
+
+    implementation("com.itextpdf:itext-core:$itextVersion")
+    implementation("com.itextpdf:bouncy-castle-adapter:$itextVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")

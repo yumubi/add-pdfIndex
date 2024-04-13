@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration scan="true" scanPeriod="10 minutes">
     <property name="LOG_HOME" value="/var/log"/>
+    <property name="PROJECT_NAME" value="add-pdfIndex"/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
 
-          <pattern>%black %magenta(%d{yyyy-MM-dd HH:mm:ss}) %highlight([%thread]) %green(%-5level) [%file.%method:%line]
-            %green(%X{RequestId}) %boldMagenta(%logger{}) - %cyan(%msg%n)
-          </pattern>
-<!--            <layout>-->
+
+            <layout>
 <!--                <pattern>%d{HH:mm:ss.SSS} [%-5level]-%logger{36}[%L]: %msg%n</pattern>-->
-<!--            </layout>-->
+                <pattern>%black %magenta(%d{yyyy-MM-dd HH:mm:ss}) %highlight([%thread]) %green(%-5level) [%file.%method:%line]
+                    %green(%X{RequestId}) %boldMagenta(%logger{}) - %cyan(%msg%n)
+                </pattern>
+            </layout>
         </encoder>
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <FileNamePattern>./logs/doc_log.%d{yyyy-MM-dd}_%i.log</FileNamePattern>          、
+            <FileNamePattern>${LOG_HOME}/${PROJECT_NAME}_log.%d{yyyy-MM-dd}_%i.log</FileNamePattern>          、
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>60</maxHistory>
             <totalSizeCap>2GB</totalSizeCap>

@@ -1,5 +1,12 @@
 package io.goji.tools;
 
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfOutline;
+import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.navigation.PdfExplicitDestination;
+import com.itextpdf.kernel.utils.PdfMerger;
+import com.itextpdf.layout.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +77,29 @@ public class Main {
                         .toList();
 
                 List<Bookmark> bookmarkTree = Bookmark.toTree(parseBookmarks);
-                bookmarkTree.forEach(bookmark -> System.out.println(STR."\{bookmark.toString()},\n"));
+                bookmarkTree.forEach(bookmark -> LOGGER.debug(STR."\{bookmark.toString()},\n"));
+
+
+
+
+                PdfReader pdfReader = new PdfReader(Objects.requireNonNull(Main.class.getClassLoader().getResourceAsStream(originalPDF)));
+
+                PdfDocument pdfDoc = new PdfDocument(pdfReader, new PdfWriter(outputPDF));
+                PdfMerger merger = new PdfMerger(pdfDoc);
+
+                PdfDocument tempDoc = new PdfDocument(new PdfReader(originalPDF));
+                int numberOfPages = tempDoc.getNumberOfPages();
+                for (int i = 1; i <= numberOfPages; i++) {
+                    merger.merge(tempDoc, i, i);
+                }
+                tempDoc.close();
+
+                // Add bookmarks
+                PdfOutline rootOutline = pdfDoc.getOutlines(false);
+                writeBookmark(pdfDoc, bookmarkTree, rootOutline);
+
+                pdfDoc.close();
+
 
 
             } catch (IOException e) {
@@ -80,10 +109,24 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
+
+
+
+    private static void writeBookmark(PdfDocument pdfDoc, List<Bookmark> bookmarkTree, PdfOutline outlineNode) {
+        for (Bookmark bookmark : bookmarkTree) {
+            PdfOutline subNode = outlineNode.addOutline(bookmark.name);
+            subNode.addDestination(PdfExplicitDestination.createFit(pdfDoc.getPage(bookmark.pdfPageNumber)));
+            if (bookmark.children != null) {
+                writeBookmark(pdfDoc, bookmark.children, subNode);
+            }
+        }
+    }
 }
 
 
 class Bookmark {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Bookmark.class);
     String name;
     Integer pdfPageNumber;
     Integer depth;
@@ -124,12 +167,13 @@ class Bookmark {
                     node.name = STR."\{prefix} \{node.name}";
                 }
                 if(node.depth == 0 && bookmarks.get(Math.min(index + 1, bookmarks.size() - 1)).depth == 1) { // next node is a direct child of root
-                    prefixCount++;
-                    System.out.println("next node is a direct child of root, %s, content is %s, prefixCount is %d".formatted(index, node.toString(), prefixCount));
+                    prefixCount++; // 更新大章节前缀, 从 "第一章" 到 "第二章" 前缀 1 -> 2
+
+                    LOGGER.debug("next node is a direct child of root, %s, content is %s, prefixCount is %d".formatted(index, node.toString(), prefixCount));
                 }
                 index++;
             } else if(curRoot.depth + 1 < node.depth) { // dive into next child root
-                Bookmark nextRoot = curRoot.children.get(curRoot.children.size() - 1);
+                Bookmark nextRoot = curRoot.children.getLast();
                 index = addNode(nextRoot, prefix, bookmarks, index);
             } else if(curRoot.depth >= node.depth) {
                 return index;
